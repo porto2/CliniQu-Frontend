@@ -115,7 +115,15 @@ tailwind.config = {
   }
 
   @media(max-width:640px){
-    .card-main{padding:20px}
+    .card-main{padding:16px}
+    .grid-lines{background-size:20px 20px}
+  }
+
+  /* Responsive typography */
+  @media(max-width:480px){
+    h1{font-size:1.75rem !important}
+    .text-3xl{font-size:1.5rem !important}
+    .text-4xl{font-size:1.75rem !important}
   }
 </style>
 </head>
@@ -129,7 +137,7 @@ tailwind.config = {
 
   <!-- Top Bar -->
   <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-white border-opacity-5">
-    <div class="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-8 h-8 rounded-xl flex items-center justify-center glow-teal" style="background:linear-gradient(135deg,#0D6E7A,#0D9BAA)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
@@ -147,10 +155,10 @@ tailwind.config = {
   </nav>
 
   <!-- Main Content -->
-  <main class="max-w-2xl mx-auto px-4 pt-24 pb-16">
+  <main class="max-w-2xl mx-auto px-3 sm:px-4 pt-20 sm:pt-24 pb-12 sm:pb-16">
 
     <!-- Hero -->
-    <div class="text-center mb-10" id="hero">
+    <div class="text-center mb-6 sm:mb-10" id="hero">
       <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-6">
         <span class="tag" style="background:rgba(13,155,170,0.15);color:#5BC8D5">AI-POWERED</span>
         <span class="text-xs text-gray-500">Clinical Intelligence Platform</span>
@@ -165,7 +173,7 @@ tailwind.config = {
     </div>
 
     <!-- Upload Card -->
-    <div class="glass-strong rounded-2xl p-6 sm:p-8 mb-4 glow-border card-main" id="main-card">
+    <div class="glass-strong rounded-2xl p-4 sm:p-8 mb-4 glow-border card-main" id="main-card">
 
       <!-- Step indicator -->
       <div class="flex items-center gap-3 mb-6">
@@ -288,7 +296,7 @@ tailwind.config = {
     </div>
 
     <!-- Features Row -->
-    <div class="grid grid-cols-3 gap-3">
+    <div class="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3">
       <div class="glass rounded-xl p-4 text-center">
         <div class="w-9 h-9 rounded-lg mx-auto mb-2 flex items-center justify-center" style="background:rgba(13,155,170,0.1)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#0D9BAA"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8z"/></svg>
