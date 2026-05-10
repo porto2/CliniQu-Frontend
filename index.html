@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClinIQ — AI Clinical Intelligence</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Space Grotesk','sans-serif'], mono: ['JetBrains Mono','monospace'] },
+      colors: {
+        dark: { 900:'#04080F', 800:'#080F1A', 700:'#0D1825', 600:'#122030', 500:'#1A2E42' },
+        teal: { DEFAULT:'#0D9BAA', dim:'#0A7A87', glow:'rgba(13,155,170,0.15)', light:'#5BC8D5' },
+      }
+    }
+  }
+}
+</script>
+<style>
+  *{box-sizing:border-box;scroll-behavior:smooth}
+  body{background:#04080F;font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden}
+
+  .glass{background:rgba(13,155,170,0.04);border:1px solid rgba(13,155,170,0.12);backdrop-filter:blur(12px)}
+  .glass-strong{background:rgba(13,155,170,0.08);border:1px solid rgba(13,155,170,0.2);backdrop-filter:blur(20px)}
+
+  .glow-teal{box-shadow:0 0 24px rgba(13,155,170,0.35),0 0 48px rgba(13,155,170,0.12)}
+  .glow-border{box-shadow:inset 0 0 20px rgba(13,155,170,0.05),0 0 40px rgba(13,155,170,0.08)}
+
+  .upload-zone{
+    border:1.5px dashed rgba(13,155,170,0.25);
+    background:rgba(13,155,170,0.03);
+    transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+    position:relative;overflow:hidden;
+  }
+  .upload-zone::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(ellipse at 50% 50%,rgba(13,155,170,0.06) 0%,transparent 70%);
+    opacity:0;transition:opacity 0.3s;
+  }
+  .upload-zone:hover{border-color:rgba(13,155,170,0.5);background:rgba(13,155,170,0.06)}
+  .upload-zone:hover::before{opacity:1}
+  .upload-zone.drag-over{border-color:#0D9BAA;background:rgba(13,155,170,0.1);transform:scale(1.01)}
+
+  .btn-analyze{
+    background:linear-gradient(135deg,#0D6E7A 0%,#0D9BAA 50%,#1AB8C9 100%);
+    position:relative;overflow:hidden;transition:all 0.3s;
+  }
+  .btn-analyze::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,transparent 0%,rgba(255,255,255,0.1) 50%,transparent 100%);
+    transform:translateX(-100%);transition:transform 0.5s;
+  }
+  .btn-analyze:hover:not(:disabled)::after{transform:translateX(100%)}
+  .btn-analyze:hover:not(:disabled){box-shadow:0 0 32px rgba(13,155,170,0.5),0 4px 20px rgba(0,0,0,0.3);transform:translateY(-1px)}
+  .btn-analyze:disabled{opacity:0.35;cursor:not-allowed}
+
+  .spinner{
+    width:18px;height:18px;
+    border:2px solid rgba(255,255,255,0.2);
+    border-top-color:white;
+    border-radius:50%;
+    animation:spin 0.7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .pulse-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:#0D9BAA;
+    animation:pulse-ring 2s cubic-bezier(0.455,0.03,0.515,0.955) infinite;
+  }
+  @keyframes pulse-ring{
+    0%{box-shadow:0 0 0 0 rgba(13,155,170,0.6)}
+    70%{box-shadow:0 0 0 8px rgba(13,155,170,0)}
+    100%{box-shadow:0 0 0 0 rgba(13,155,170,0)}
+  }
+
+  .grid-lines{
+    background-image:
+      linear-gradient(rgba(13,155,170,0.03) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(13,155,170,0.03) 1px,transparent 1px);
+    background-size:40px 40px;
+  }
+
+  .fade-in{animation:fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1) forwards}
+  @keyframes fadeInUp{
+    from{opacity:0;transform:translateY(16px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
+  .progress-bar{
+    height:2px;background:rgba(13,155,170,0.1);border-radius:99px;overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;background:linear-gradient(90deg,#0D9BAA,#5BC8D5);
+    border-radius:99px;width:0%;transition:width 0.3s;
+  }
+
+  .tag{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;
+    font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;
+  }
+
+  .step-line::after{
+    content:'';position:absolute;left:50%;top:100%;
+    width:1px;height:20px;
+    background:linear-gradient(to bottom,rgba(13,155,170,0.4),transparent);
+    transform:translateX(-50%);
+  }
+
+  @media(max-width:640px){
+    .card-main{padding:20px}
+  }
+</style>
+</head>
+<body class="grid-lines" x-data="cliniq()">
+
+  <!-- Background Orbs -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden">
+    <div style="position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(13,155,170,0.06) 0%,transparent 70%);top:-200px;left:-200px;filter:blur(40px)"></div>
+    <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(13,155,170,0.04) 0%,transparent 70%);bottom:-100px;right:-100px;filter:blur(40px)"></div>
+  </div>
+
+  <!-- Top Bar -->
+  <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-white border-opacity-5">
+    <div class="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center glow-teal" style="background:linear-gradient(135deg,#0D6E7A,#0D9BAA)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        </div>
+        <div>
+          <span class="text-sm font-bold text-white tracking-wide">ClinIQ</span>
+          <span class="text-xs text-gray-600 font-mono ml-2">v2.0</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="pulse-dot"></div>
+        <span class="text-xs font-mono" :class="apiOnline ? 'text-teal' : 'text-red-400'" x-text="apiOnline ? 'API Online' : 'API Offline'"></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-2xl mx-auto px-4 pt-24 pb-16">
+
+    <!-- Hero -->
+    <div class="text-center mb-10" id="hero">
+      <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 mb-6">
+        <span class="tag" style="background:rgba(13,155,170,0.15);color:#5BC8D5">AI-POWERED</span>
+        <span class="text-xs text-gray-500">Clinical Intelligence Platform</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
+        Analisis Catatan Klinis
+        <span style="background:linear-gradient(135deg,#0D9BAA,#5BC8D5);-webkit-background-clip:text;-webkit-text-fill-color:transparent"> dengan AI</span>
+      </h1>
+      <p class="text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+        Upload catatan medis CSV atau PDF. Model AI akan menganalisis, mengekstrak insight klinis, dan menghasilkan laporan terstruktur secara otomatis.
+      </p>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="glass-strong rounded-2xl p-6 sm:p-8 mb-4 glow-border card-main" id="main-card">
+
+      <!-- Step indicator -->
+      <div class="flex items-center gap-3 mb-6">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style="background:rgba(13,155,170,0.2);color:#0D9BAA;border:1px solid rgba(13,155,170,0.3)">1</div>
+          <span class="text-xs text-gray-400">Upload File</span>
+        </div>
+        <div class="flex-1 h-px" style="background:rgba(255,255,255,0.05)"></div>
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" :style="file ? 'background:rgba(13,155,170,0.2);color:#0D9BAA;border:1px solid rgba(13,155,170,0.3)' : 'background:rgba(255,255,255,0.04);color:#444;border:1px solid rgba(255,255,255,0.06)'">2</div>
+          <span class="text-xs" :class="file ? 'text-gray-400' : 'text-gray-700'">Analisis</span>
+        </div>
+        <div class="flex-1 h-px" style="background:rgba(255,255,255,0.05)"></div>
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" :style="done ? 'background:rgba(13,155,170,0.2);color:#0D9BAA;border:1px solid rgba(13,155,170,0.3)' : 'background:rgba(255,255,255,0.04);color:#444;border:1px solid rgba(255,255,255,0.06)'">3</div>
+          <span class="text-xs" :class="done ? 'text-gray-400' : 'text-gray-700'">Laporan</span>
+        </div>
+      </div>
+
+      <!-- Upload Zone -->
+      <div class="upload-zone rounded-xl p-8 text-center cursor-pointer mb-5"
+           @click="$refs.fileInput.click()"
+           @dragover.prevent="$el.classList.add('drag-over')"
+           @dragleave="$el.classList.remove('drag-over')"
+           @drop.prevent="handleDrop($event)">
+        <input type="file" accept=".csv,.pdf" x-ref="fileInput" @change="handleFile($event)" class="hidden">
+
+        <template x-if="!file">
+          <div>
+            <div class="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(13,110,122,0.3),rgba(13,155,170,0.2));border:1px solid rgba(13,155,170,0.2)">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#0D9BAA"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+            </div>
+            <p class="text-sm font-semibold text-gray-300 mb-1">Drop file atau klik untuk pilih</p>
+            <p class="text-xs text-gray-600 font-mono">CSV · PDF — max 50MB</p>
+            <div class="flex items-center justify-center gap-4 mt-4">
+              <span class="tag" style="background:rgba(0,212,100,0.08);color:#00cc66;border:1px solid rgba(0,204,102,0.2)">CSV</span>
+              <span class="tag" style="background:rgba(255,100,50,0.08);color:#ff6632;border:1px solid rgba(255,100,50,0.2)">PDF</span>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="file">
+          <div class="fade-in">
+            <div class="w-14 h-14 rounded-xl mx-auto mb-3 flex items-center justify-center" style="background:rgba(13,155,170,0.15);border:1px solid rgba(13,155,170,0.3)">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#0D9BAA"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            </div>
+            <p class="text-sm font-bold text-white mb-1" x-text="file.name"></p>
+            <p class="text-xs font-mono" style="color:#0D9BAA" x-text="formatSize(file.size)"></p>
+            <button @click.stop="file=null;done=false;error=null" class="mt-3 text-xs text-gray-600 hover:text-red-400 transition-colors">Hapus file</button>
+          </div>
+        </template>
+      </div>
+
+      <!-- Progress bar (saat loading) -->
+      <template x-if="loading">
+        <div class="progress-bar mb-4">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </template>
+
+      <!-- Error -->
+      <template x-if="error">
+        <div class="fade-in rounded-xl p-4 mb-4 text-sm font-mono" style="background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);color:#ff4757" x-text="error"></div>
+      </template>
+
+      <!-- Analyze Button -->
+      <button @click="analyze()" :disabled="!file || loading"
+              class="btn-analyze w-full py-3.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2.5">
+        <template x-if="loading">
+          <div class="flex items-center gap-2.5">
+            <div class="spinner"></div>
+            <span>Menganalisis catatan klinis...</span>
+          </div>
+        </template>
+        <template x-if="!loading">
+          <div class="flex items-center gap-2.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Analyze Clinical Notes</span>
+          </div>
+        </template>
+      </button>
+
+      <!-- Success State -->
+      <template x-if="done">
+        <div class="fade-in mt-5 rounded-xl p-5 text-center" style="background:rgba(13,155,170,0.06);border:1px solid rgba(13,155,170,0.2)">
+          <div class="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center" style="background:rgba(13,155,170,0.15)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#0D9BAA"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </div>
+          <p class="text-sm font-bold text-white mb-1">Laporan Selesai</p>
+          <p class="text-xs text-gray-500 mb-4">PDF telah diunduh secara otomatis</p>
+          <button @click="done=false;file=null;error=null"
+                  class="px-5 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-80"
+                  style="background:rgba(13,155,170,0.2);border:1px solid rgba(13,155,170,0.3)">
+            Analisis File Lain
+          </button>
+        </div>
+      </template>
+    </div>
+
+    <!-- Format Reference Card -->
+    <div class="glass rounded-xl p-5 mb-4">
+      <p class="text-xs font-bold tracking-widest mb-3" style="color:#0D9BAA">FORMAT CSV</p>
+      <div class="space-y-1.5 font-mono text-xs">
+        <p class="text-gray-500">note_id, text</p>
+        <p class="text-gray-700">N001, "Patient 65yo male, hypertension, admitted for chest pain..."</p>
+        <p class="text-gray-700">N002, "ICU day 2, septic shock, vasopressor support required..."</p>
+        <p class="text-gray-700">N003, "Outpatient followup, diabetes management, HbA1c 8.2%..."</p>
+      </div>
+    </div>
+
+    <!-- Features Row -->
+    <div class="grid grid-cols-3 gap-3">
+      <div class="glass rounded-xl p-4 text-center">
+        <div class="w-9 h-9 rounded-lg mx-auto mb-2 flex items-center justify-center" style="background:rgba(13,155,170,0.1)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#0D9BAA"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8z"/></svg>
+        </div>
+        <p class="text-xs font-semibold text-gray-300">NER Biomedik</p>
+        <p class="text-xs text-gray-600 mt-0.5">Ekstrak entitas klinis</p>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <div class="w-9 h-9 rounded-lg mx-auto mb-2 flex items-center justify-center" style="background:rgba(13,155,170,0.1)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#0D9BAA"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+        </div>
+        <p class="text-xs font-semibold text-gray-300">RAG Insight</p>
+        <p class="text-xs text-gray-600 mt-0.5">Konteks knowledge base</p>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <div class="w-9 h-9 rounded-lg mx-auto mb-2 flex items-center justify-center" style="background:rgba(13,155,170,0.1)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#0D9BAA"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </div>
+        <p class="text-xs font-semibold text-gray-300">PDF Report</p>
+        <p class="text-xs text-gray-600 mt-0.5">Laporan terstruktur</p>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+  function cliniq() {
+    return {
+      file: null,
+      loading: false,
+      error: null,
+      done: false,
+      apiOnline: false,
+
+      async init() {
+        // Animate hero on load
+        if (typeof gsap !== 'undefined') {
+          gsap.from('#hero', { opacity: 0, y: 30, duration: 0.8, ease: 'power3.out' })
+          gsap.from('#main-card', { opacity: 0, y: 40, duration: 0.8, delay: 0.15, ease: 'power3.out' })
+        }
+        // Check API
+        try {
+          const r = await fetch('https://cliniqu.up.railway.app/health', { signal: AbortSignal.timeout(5000) })
+          this.apiOnline = r.ok
+        } catch { this.apiOnline = false }
+      },
+
+      handleFile(e) {
+        const f = e.target.files[0]
+        if (f) { this.file = f; this.done = false; this.error = null }
+      },
+
+      handleDrop(e) {
+        const f = e.dataTransfer.files[0]
+        if (f && (f.name.endsWith('.csv') || f.name.endsWith('.pdf'))) {
+          this.file = f; this.done = false; this.error = null
+        }
+      },
+
+      formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B'
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
+        return (bytes / 1048576).toFixed(1) + ' MB'
+      },
+
+      async analyze() {
+        if (!this.file || this.loading) return
+        this.loading = true
+        this.error = null
+        this.done = false
+
+        // Animate progress bar
+        if (typeof gsap !== 'undefined') {
+          gsap.to('#progressFill', { width: '80%', duration: 8, ease: 'power1.inOut' })
+        }
+
+        const CLINIQ_URL = 'https://cliniqu.up.railway.app'
+        const endpoint = this.file.name.endsWith('.pdf') ? '/analyze/pdf' : '/analyze/csv'
+        const form = new FormData()
+        form.append('file', this.file)
+
+        try {
+          const res = await fetch(CLINIQ_URL + endpoint, { method: 'POST', body: form })
+          if (!res.ok) throw new Error('Analisis gagal — periksa format file.')
+          const blob = await res.blob()
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url; a.download = 'ClinIQ_Report.pdf'; a.click()
+          URL.revokeObjectURL(url)
+          if (typeof gsap !== 'undefined') {
+            gsap.to('#progressFill', { width: '100%', duration: 0.3 })
+          }
+          this.done = true
+        } catch(e) {
+          this.error = e.message
+        } finally {
+          this.loading = false
+        }
+      }
+    }
+  }
+  </script>
+</body>
+</html>
