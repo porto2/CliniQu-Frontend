@@ -231,6 +231,17 @@ tailwind.config = {
         <div class="fade-in rounded-xl p-4 mb-4 text-sm font-mono" style="background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);color:#ff4757" x-text="error"></div>
       </template>
 
+      <!-- Telegram ID Input -->
+      <div class="glass rounded-xl px-4 py-3 mb-4">
+        <p class="text-xs font-bold tracking-widest mb-2" style="color:#0D9BAA">TELEGRAM (OPSIONAL)</p>
+        <div class="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#0D9BAA"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.018 9.52c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.48 14.17l-2.95-.924c-.64-.203-.654-.64.136-.948l11.532-4.448c.537-.194 1.006.131.364 1.399z"/></svg>
+          <input type="text" x-model="telegramId" placeholder="Masukkan Telegram ID atau username (@username)"
+                 class="flex-1 bg-transparent text-sm text-gray-300 outline-none placeholder-gray-600 font-mono">
+        </div>
+        <p class="text-xs text-gray-600 mt-1.5">PDF laporan akan dikirim otomatis ke Telegram lo</p>
+      </div>
+
       <!-- Analyze Button -->
       <button @click="analyze()" :disabled="!file || loading"
               class="btn-analyze w-full py-3.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2.5">
@@ -307,6 +318,7 @@ tailwind.config = {
   function cliniq() {
     return {
       file: null,
+      telegramId: null,
       loading: false,
       error: null,
       done: false,
@@ -358,6 +370,7 @@ tailwind.config = {
         const endpoint = this.file.name.endsWith('.pdf') ? '/analyze/pdf' : '/analyze/csv'
         const form = new FormData()
         form.append('file', this.file)
+        if (this.telegramId) form.append('telegram_id', this.telegramId)
 
         try {
           const res = await fetch(CLINIQ_URL + endpoint, { method: 'POST', body: form })
