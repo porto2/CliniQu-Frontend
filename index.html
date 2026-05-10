@@ -320,7 +320,7 @@ tailwind.config = {
         }
         // Check API
         try {
-          const r = await fetch('https://cliniqu.up.railway.app/health', { signal: AbortSignal.timeout(5000) })
+          const r = await fetch('https://kik3333-cliniqu-api.hf.space/health', { signal: AbortSignal.timeout(5000) })
           this.apiOnline = r.ok
         } catch { this.apiOnline = false }
       },
@@ -354,7 +354,7 @@ tailwind.config = {
           gsap.to('#progressFill', { width: '80%', duration: 8, ease: 'power1.inOut' })
         }
 
-        const CLINIQ_URL = 'https://cliniqu.up.railway.app'
+        const CLINIQ_URL = 'https://kik3333-cliniqu-api.hf.space'
         const endpoint = this.file.name.endsWith('.pdf') ? '/analyze/pdf' : '/analyze/csv'
         const form = new FormData()
         form.append('file', this.file)
