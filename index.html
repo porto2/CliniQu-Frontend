@@ -385,11 +385,29 @@ tailwind.config = {
           const url = URL.createObjectURL(blob)
           const a = document.createElement('a')
           a.href = url; a.download = 'ClinIQ_Report.pdf'; a.click()
-          URL.revokeObjectURL(url)
           if (typeof gsap !== 'undefined') {
             gsap.to('#progressFill', { width: '100%', duration: 0.3 })
           }
           this.done = true
+
+          // Kirim ke Telegram via BusinessAnalytic backend
+          if (this.telegramId) {
+            try {
+              const now = new Date()
+              const date = now.toLocaleDateString('id-ID')
+              const time = now.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'})
+              const msg = `🏥 ClinIQ Report Selesai\n📅 ${date}, ${time}\n📋 Total Notes: ${this.file.name}\n\n🔗 Coba juga BusinessAnalytic: https://businessanalytic.vercel.app`
+              const pdfForm = new FormData()
+              pdfForm.append('chat_id', this.telegramId)
+              pdfForm.append('message', msg)
+              pdfForm.append('pdf', blob, 'ClinIQ_Report.pdf')
+              await fetch('https://businessanalytic.up.railway.app/api/v1/telegram-pdf', {
+                method: 'POST',
+                body: pdfForm
+              })
+            } catch(e) { console.error('Telegram error:', e) }
+          }
+          URL.revokeObjectURL(url)
         } catch(e) {
           this.error = e.message
         } finally {
